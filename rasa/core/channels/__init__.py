@@ -24,6 +24,7 @@ from rasa.core.channels.twilio import TwilioInput  # noqa: F401
 from rasa.core.channels.twilio_voice import TwilioVoiceInput  # noqa: F401
 from rasa.core.channels.webexteams import WebexTeamsInput  # noqa: F401
 from rasa.core.channels.hangouts import HangoutsInput  # noqa: F401
+from rasa.core.channels.whatsapp import WhatsappInput  # noqa: F401
 
 input_channel_classes: List[Type[InputChannel]] = [
     CmdlineInput,
@@ -41,6 +42,7 @@ input_channel_classes: List[Type[InputChannel]] = [
     SocketIOInput,
     WebexTeamsInput,
     HangoutsInput,
+    WhatsappInput
 ]
 
 # Mapping from an input channel name to its class to allow name based lookup.
