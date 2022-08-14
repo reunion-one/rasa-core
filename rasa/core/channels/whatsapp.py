@@ -72,11 +72,6 @@ def split_text_message(value, threshold):
 
         for newline_split_message in newline_split_messages:
             message_part = "\n".join(newline_split_message)
-            try:
-                encoded_message_part = base64.b64encode(message_part.encode()).decode()
-                print("Iteration on split message : ",message_part,"\n---> ", encoded_message_part)
-            except Exception as err:
-                traceback.print_exc()
             messages_payload.append(message_part)
     
     return messages_payload
@@ -340,7 +335,11 @@ class WhatsappMessengerBot(OutputChannel):
         """Send a message through this channel."""
         print("-"*24," send_text_message ","-"*24)
 
-        messages = split_text_message(text, 100)
+        if type(text) == list:
+            messages = text
+        else:
+            messages = split_text_message(text, 75)
+        
         for message_part in messages:
             self.whatsapp_client.send_message(message_part, recipient_id)
 
@@ -470,14 +469,11 @@ class WhatsappMessengerBot(OutputChannel):
                 })
 
             if element.get("body_text"):
-                print("+"*42)
-                print(element)
-                print(element["body_text"])
-                print("+"*42)
-                trimmed_body_text = element["body_text"].rsplit("\n\n\n", 1)
-                if len(trimmed_body_text) == 2:
-                    await self.send_text_message(recipient_id, trimmed_body_text[0])
-                trimmed_body_text = trimmed_body_text[-1]
+
+                splitted_text_message = split_text_message(element["body_text"], 75)
+                if len(splitted_text_message) >= 2:
+                    await self.send_text_message(recipient_id, splitted_text_message[: -1])
+                trimmed_body_text = splitted_text_message[-1]
                 trimmed_body_text = safely_trim(trimmed_body_text, "quick_reply.body_text")
                 
                 quick_reply_payload.update({
@@ -507,11 +503,22 @@ class WhatsappMessengerBot(OutputChannel):
 
             self.whatsapp_client.send_reply_button(recipient_id=recipient_id, button=quick_reply_payload)
 
-
         if json_message.get("template"):
             template = json_message.get("template")[0]
-            params = ast.literal_eval(template.get("params"))
-            self.whatsapp_client.send_template(template.get("template_name",""), recipient_id, params)
+            header_params = template.get("header_params")
+            button_params = template.get("button_params")
+
+            body_params = template.get("body_params")
+            if body_params:
+                body_params = ast.literal_eval(body_params)
+            
+            self.whatsapp_client.send_template(
+                template.get("template_name",""),
+                recipient_id,
+                header_params=header_params,
+                body_params=body_params,
+                button_params=button_params,
+            )
         
 
 class WhatsappInput(InputChannel):
